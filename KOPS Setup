@@ -1,0 +1,44 @@
+STEP-1: GIVING PERMISSIONS
+
+IAM -- > USER -- > CREATE USER -- > NAME: KOPS -- > Attach Polocies Directly -- > AdministratorAccess -- > NEXT -- > CREATE USER
+USER -- > SECURTITY CREDENTIALS -- > CREATE ACCESS KEYS -- > CLI -- > CHECKBOX -- >  CREATE ACCESS KEYS -- > DOWNLOAD 
+
+then type coomand in mobaxterm: aws configure  ---> then add id ----> add pass ----> then give default output format is: table
+
+SETP-2: INSTALL KUBECTL AND KOPS
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+wget https://github.com/kubernetes/kops/releases/download/v1.25.0/kops-linux-amd64
+chmod +x kops-linux-amd64 kubectl
+mv kubectl /usr/local/bin/kubectl
+mv kops-linux-amd64 /usr/local/bin/kops
+
+vim .bashrc
+export PATH=$PATH:/usr/local/bin/  -- > save and exit
+source .bashrc
+
+SETP-3: CREATEING BUCKET ----> bucket name can give anything but dont same name can't exit in bucket and cluster.
+aws s3api create-bucket --bucket devopsbynik07.k8s.local --region us-east-1
+aws s3api put-bucket-versioning --bucket devopsbynik07.k8s.local --region us-east-1 --versioning-configuration Status=Enabled
+export KOPS_STATE_STORE=s3://devopsbynik07.k8s.local
+
+SETP-4: CREATING THE CLUSTER
+kops create cluster --name nikhil.k8s.local --zones us-east-1a --master-count=1 --master-size t2.medium --node-count=2 --node-size t2.micro
+kops update cluster --name nikhil.k8s.local --yes --admin
+
+==========================================================================================================================
+Suggestions:
+ * list clusters with: kops get cluster
+ * edit this cluster with: kops edit cluster nikhil.k8s.local
+ * edit your node instance group: kops edit ig --name=nikhils.k8s.local nodes-us-east-1a
+ * edit your master instance group: kops edit ig --name=nikhil.k8s.local master-us-east-1a
+
+
+ADMIN ACTIVITIES:
+To scale the worker nodes:
+kops edit ig --name=nikhil.k8s.local nodes-us-east-1a
+kops update cluster --name nikhil.k8s.local --yes --admin 
+kops rolling-update cluster --yes
+
+kubectl describe node node_id
+kops delete cluster --name nikhil.k8s.local --yes  ---> it delete all instances in the aws console. no need to manually stop the instances.
